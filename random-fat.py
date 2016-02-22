@@ -1,3 +1,14 @@
+# Name: Random Function Analysis Tool
+# Author: Eric Taylor
+#
+# Generates a random sequence, calculating the probability
+# mass function of the intervals. Interval here means "after
+# receiving a specific outcome, how many trials elapse until
+# the next occurence of that outcome".
+#
+# Currently 11 algorithms used in various Tetris games are
+# implemented.
+
 import numpy as np
 import numpy.random as rng
 import matplotlib.pyplot as plt
@@ -5,6 +16,8 @@ import matplotlib.pyplot as plt
 iterations = 100000
 radix = 7
 
+
+# Atari / Sega / etc Tetris
 class pure:
 
 	def rand(self):
@@ -12,7 +25,7 @@ class pure:
 		return rng.randint(0,radix)
 
 
-
+# NES Tetris
 class nes:
 
     def __init__(self):
@@ -32,7 +45,7 @@ class nes:
 		return piece
 
 
-
+# GameBoy Tetris
 class gboy:
 
     def __init__(self):
@@ -57,7 +70,7 @@ class gboy:
 		return piece
 
 
-
+# Tetris the Grand Master
 class tgm1:
 
     def __init__(self):
@@ -83,7 +96,7 @@ class tgm1:
 		return piece
 
 
-
+# Tetris the Grand Master 2: The Absolute Plus
 class tgm2:
 
     def __init__(self):
@@ -109,7 +122,7 @@ class tgm2:
 		return piece
 
 
-
+# Tetris the Grand Master 3: Terror Instinct
 class tgm3:
 
     def __init__(self):
@@ -151,7 +164,7 @@ class tgm3:
 		return piece
 
 
-
+# Tetris with Cardcaptor Sakura: Eternal Heart
 class ccs:
 
     def __init__(self):
@@ -182,7 +195,7 @@ class ccs:
 		return piece
 
 
-
+# Super Rotation System / Tetris Guideline / "Random Generator" aka 7-bag
 class srs:
 
     def __init__(self):
@@ -201,7 +214,7 @@ class srs:
 		return piece
 
 
-
+# Tetris Online Japan (beta)
 class toj:
 
     def __init__(self):
@@ -221,7 +234,7 @@ class toj:
 		return piece
 
 
-
+# Double Bag aka 14-bag
 class bag2x:
 
     def __init__(self):
@@ -242,7 +255,7 @@ class bag2x:
 		return piece
 
 
-
+# The New Tetris
 class tnt64:
 
     def __init__(self):
@@ -262,6 +275,8 @@ class tnt64:
 		
 		return piece
 
+
+# collect stats on the intervals
 def intervals(randomizer):
 	intervals = np.zeros([1000], dtype=np.int64)
 	last_seen = np.zeros([radix], dtype=np.int64)
@@ -288,17 +303,17 @@ bag2x = intervals(bag2x().rand)
 tnt64 = intervals(tnt64().rand)
 
 # create plots
-plt.plot(pure_random, 'k.-', color='#000000', label='pure_random', linewidth=2)
-plt.plot(nes, 'k.-', label='nes', color='#2277EE', linewidth=2)
-plt.plot(gboy, 'k.-', label='gboy', color='#113311', linewidth=2)
-plt.plot(tgm1, 'k.-', label='tgm1', color='#CC6666', linewidth=2)
-plt.plot(tgm2, 'k.-', label='tgm2', color='#EE6666', linewidth=2)
-plt.plot(tgm3, 'k.-', label='tgm3', color='#FF0000', linewidth=2)
-plt.plot(ccs, 'k.-', label='ccs', color='#FF00FF', linewidth=2)
-plt.plot(srs, 'k.-', label='srs', color='#00FFFF', linewidth=2)
-plt.plot(toj, 'k.-', label='toj', color='#00FF88', linewidth=2)
-plt.plot(bag2x, 'k.-', label='bag2x', color='#0000FF', linewidth=2)
-plt.plot(tnt64, '.-', label='tnt64', color='#FFFF00', linewidth=2)
+plt.plot(pure_random, 'k.-', color='#000000', label='pure_random')
+plt.plot(nes, 'k.-', label='nes', color='#2277EE')
+plt.plot(gboy, 'k.-', label='gboy', color='#113311')
+plt.plot(tgm1, 'k.-', label='tgm1', color='#CC6666')
+plt.plot(tgm2, 'k.-', label='tgm2', color='#EE6666')
+plt.plot(tgm3, 'k.-', label='tgm3', color='#FF0000')
+plt.plot(ccs, 'k.-', label='ccs', color='#FF00FF')
+plt.plot(srs, 'k.-', label='srs', color='#00FFFF')
+plt.plot(toj, 'k.-', label='toj', color='#00FF88')
+plt.plot(bag2x, 'k.-', label='bag2x', color='#0000FF')
+plt.plot(tnt64, '.-', label='tnt64', color='#FFFF00')
 plt.title('Repeat intervals of various Tetris randomization algorithms')
 plt.xlabel('interval')
 plt.xlim(xmin=1, xmax=15)
