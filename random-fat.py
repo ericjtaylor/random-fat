@@ -104,17 +104,25 @@ class tgm1:
 
     def __init__(self):
     	self.h_size = 4
-        self.history = np.zeros([self.h_size], dtype=np.int64)
+        self.history = np.zeros([self.h_size], dtype=np.int64) # initial history ZZZZ
+        self.first_piece = 1
 
     def rand(self):
 
 		# select next piece
 		for rolls in range(4):
-			piece = rng.randint(0,radix)
-			for h in range(self.h_size):
-				if piece == self.history[h]:
-					break
+
+			# roll
+			if self.first_piece == 1:
+				while self.first_piece == 1:
+					piece = rng.randint(0,radix)
+					if piece not in (1, 2, 5): # Z, S, O forbidden as first piece
+						self.first_piece = 0
 			else:
+				piece = rng.randint(0,radix)
+
+			# check history
+			if piece not in self.history:
 				break
 		
 		# update history
@@ -130,17 +138,25 @@ class tgm2:
 
     def __init__(self):
     	self.h_size = 4
-        self.history = np.zeros([self.h_size], dtype=np.int64)
+        self.history = [1, 2, 1, 2] # initial history ZSZS
+        self.first_piece = 1
 
     def rand(self):
 
 		# select next piece
 		for rolls in range(6):
-			piece = rng.randint(0,radix)
-			for h in range(self.h_size):
-				if piece == self.history[h]:
-					break
+
+			# roll
+			if self.first_piece == 1:
+				while self.first_piece == 1:
+					piece = rng.randint(0,radix)
+					if piece not in (1, 2, 5): # Z, S, O forbidden as first piece
+						self.first_piece = 0
 			else:
+				piece = rng.randint(0,radix)
+
+			# check history
+			if piece not in self.history:
 				break
 		
 		# update history
@@ -156,39 +172,56 @@ class tgm3:
 
     def __init__(self):
     	self.h_size = 4
-        self.history = np.zeros([self.h_size], dtype=np.int64)
+        self.history = [1, 2, 1, 2] # initial history ZSZS
+        self.first_piece = 1
         self.drought = np.zeros([radix], dtype=np.int64)
         self.droughtest = 0
         self.pool = np.zeros([radix*5], dtype=np.int64)
         for i in range(radix):
-        	self.pool[i+(0*radix)] = i
-        	self.pool[i+(1*radix)] = i
-        	self.pool[i+(2*radix)] = i
-        	self.pool[i+(3*radix)] = i
-        	self.pool[i+(4*radix)] = i
+        	self.pool[(i*5)+0] = i
+        	self.pool[(i*5)+1] = i
+        	self.pool[(i*5)+2] = i
+        	self.pool[(i*5)+3] = i
+        	self.pool[(i*5)+4] = i
+        	self.drought[i] = -999
 
     def rand(self):
 		# select next piece
 		for rolls in range(6):
-			index = rng.randint(0,35)
-			piece = self.pool[index]
-			self.pool[index] = self.droughtest
-			for h in range(self.h_size):
-				if piece == self.history[h]:
-					break
+
+			# roll first piece
+			if self.first_piece == 1:
+				while self.first_piece == 1:
+					piece = rng.randint(0,radix)
+					if piece not in (1, 2, 5): # Z, S, O forbidden as first piece
+						break
+			# roll general piece
 			else:
-				break
+				index = rng.randint(0,35)
+				piece = self.pool[index]
+				self.pool[index] = self.droughtest
+				if piece not in self.history:
+					break
 		
 		# update history
 		for h in range(self.h_size-1, 0, -1):
 			self.history[h] = self.history[h-1]
 		self.history[0] = piece
 
-		# update droughts
-		for p in range(radix):
-			self.drought[p] += 1
-		self.drought[piece] = 0
-		self.droughtest = np.argmax(self.drought)
+		# unless it's the first piece...
+		if self.first_piece == 1:
+			self.first_piece = 0
+		# ... update droughts
+		else:
+			for p in range(radix):
+				self.drought[p] += 1
+			self.drought[piece] = 0
+			# new droughtest
+			if piece == self.droughtest:
+				self.droughtest = np.argmax(self.drought)
+				# real game bug -- under specific conditions the piece pool is not updated with the new droughtest
+				if not (piece == self.droughtest and rolls > 0 and np.argmin(self.drought) >= 0):
+					self.pool[index] = self.droughtest
 
 		return piece
 
@@ -198,23 +231,32 @@ class ccs:
 
     def __init__(self):
     	self.h_size = 6
-        self.history = np.zeros([self.h_size], dtype=np.int64)
+        self.history = [-1, -1, -1, -1, -1, -1]
 
     def rand(self):
 
 		# select next piece
 		for rolls in range(4):
+
+			#roll
 			piece = rng.randint(0,radix)
-			for h in range(self.h_size):
-				if piece == self.history[h]:
-					break
-			else:
+
+			# check history
+			if piece not in self.history:
 				break
-		else: # weird bonus 5th roll
+
+		# weird bonus 5th roll
+		else:
 			if rng.randint(0,2) == 1:
-				piece = self.history[1]
+				if self.history[1] != -1:
+					piece = self.history[1]
+				else:
+					piece = rng.randint(0,radix)
 			else:
-				piece = self.history[5]
+				if self.history[5] != -1:
+					piece = self.history[1]
+				else:
+					piece = rng.randint(0,radix)
 
 		# update history
 		for h in range(self.h_size-1, 0, -1):
