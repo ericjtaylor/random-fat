@@ -76,6 +76,28 @@ class gboy:
 
             return piece 
 
+# GameBoy Tetris (hypothetical bugfixed)
+class gboy_fixed:
+
+    def __init__(self): 
+            self.h_size = 2 
+            self.history = np.zeros([self.h_size], dtype=np.int64) 
+
+    def rand(self): 
+
+            # select next piece 
+            for rolls in range(3): 
+                    piece = rng.randint(0,radix) 
+                    if ((piece == self.history[0]) and (self.history[0] == self.history[1])): 
+                            continue 
+                    else: 
+                            break 
+            
+            # update history 
+            self.history[1] = self.history[0] 
+            self.history[0] = piece 
+
+            return piece
 
 # Tetris the Grand Master
 class tgm1:
