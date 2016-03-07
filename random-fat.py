@@ -1,20 +1,24 @@
-# Name: Random Function Analysis Tool
-# Author: Eric Taylor
-#
-# Generates a random sequence, calculating the probability
-# mass function of the intervals. Interval here means "after
-# receiving a specific outcome, how many trials elapse until
-# the next occurence of that outcome".
-#
-# Currently 11 algorithms used in various Tetris games are
-# implemented.
-
+from __future__ import division
+import itertools
 import numpy as np
 import numpy.random as rng
 import matplotlib.pyplot as plt
 
-iterations = 100000
-radix = 7
+
+# Name: Random Function Analysis Tool
+# Author: Eric Taylor
+#
+# Generates a random sequence, calculating the probability
+# mass function of the intervals and the entropy of the
+# output given a history.
+#
+# Currently 11 algorithms used in various Tetris games are
+# implemented.
+
+
+iterations = 100000 # random sequence length
+radix = 7 # distinct category types
+depth = 8 # conditional entropy history depth
 
 
 # Atari / Sega / etc Tetris
@@ -76,6 +80,7 @@ class gboy:
 
             return piece 
 
+
 # GameBoy Tetris (hypothetical bugfixed)
 class gboy_fixed:
 
@@ -98,6 +103,7 @@ class gboy_fixed:
             self.history[0] = piece 
 
             return piece
+
 
 # Tetris the Grand Master
 class tgm1:
@@ -347,48 +353,111 @@ class tnt64:
 		return piece
 
 
-# collect stats on the intervals
-def intervals(randomizer):
+# a recursion to sum calculate the entropy partials
+def ent_calc(d, pat_cnt, history, entropy):
+	for history[d] in range(radix):
+		if pat_cnt[d][tuple(history[:d+1])] > 0:
+			entropy[d] -= ( (pat_cnt[d][tuple(history[:d+1])] / iterations) * np.log(pat_cnt[d][tuple(history[:d+1])] / pat_cnt[d-1][tuple(history[:d])]) )
+			if d < depth-1:
+				ent_calc(d+1, pat_cnt, history, entropy)
+
+def stats_calc(randomizer):
+	
+	# interval vars
 	intervals = np.zeros([1000], dtype=np.int64)
 	last_seen = np.zeros([radix], dtype=np.int64)
-	for i in range(iterations):
+
+	# entropy vars	
+	history = np.zeros((depth), dtype=np.int64)
+	entropy = np.zeros((depth), dtype=np.float64)
+	pat_cnt = [np.zeros((radix), dtype=np.int64)]
+	for i in range(1, depth):
+		pat_cnt.append(np.repeat(np.expand_dims(pat_cnt[i-1], axis = i), radix, i))
+
+	for _ in itertools.repeat(None, iterations):
+
+		# get next piece
 		piece = randomizer()
-		if last_seen[piece]:
-			intervals[i - last_seen[piece]] += 1
-		last_seen[piece] = i
-		
-	intervals = intervals / 1.0 / (iterations-radix)
-	return intervals
+	
+		# update history
+		for h in reversed(range(depth)):
+			history[h] = history[h-1]
+		history[0] = piece
+
+		# update interval counters
+		last_seen += 1
+		intervals[last_seen[piece]] += 1
+		last_seen[piece] = 0
+
+		# update pattern counters
+		for h in range(depth):
+			pat_cnt[h][tuple(history[depth-1-h:])] += 1
+	
+	# calculate entropy
+	for history[0] in range(radix):
+		if pat_cnt[0][history[0]] > 0:
+			entropy[0] -= ( (pat_cnt[0][history[0]] / iterations) * np.log(pat_cnt[0][history[0]] / iterations) )
+			if 0 < depth-1:
+				ent_calc(1, pat_cnt, history, entropy)
+	
+	intervals = intervals / iterations # converts to % all intervals
+	entropy = entropy / np.log(radix) # converts to % of pure random
+
+	print randomizer.im_class
+	print "interval: ", intervals[:20]
+	print "entropy: ", entropy
+	return (intervals, entropy)
 
 # calculate the intervals for the various randomizers
-pure_random = intervals(pure().rand)
-nes = intervals(nes().rand)
-gboy = intervals(gboy().rand)
-tgm1 = intervals(tgm1().rand)
-tgm2 = intervals(tgm2().rand)
-tgm3 = intervals(tgm3().rand)
-ccs = intervals(ccs().rand)
-srs = intervals(srs().rand)
-toj = intervals(toj().rand)
-bag2x = intervals(bag2x().rand)
-tnt64 = intervals(tnt64().rand)
+rnd_int, rnd_ent = stats_calc(pure().rand)
+nes_int, nes_ent = stats_calc(nes().rand)
+gby_int, gby_ent = stats_calc(gboy().rand)
+gm1_int, gm1_ent = stats_calc(tgm1().rand)
+gm2_int, gm2_ent = stats_calc(tgm2().rand)
+gm3_int, gm3_ent = stats_calc(tgm3().rand)
+ccs_int, ccs_ent = stats_calc(ccs().rand)
+srs_int, srs_ent = stats_calc(srs().rand)
+toj_int, toj_ent = stats_calc(toj().rand)
+b14_int, b14_ent = stats_calc(bag2x().rand)
+b63_int, b63_ent = stats_calc(tnt64().rand)
 
 # create plots
-plt.plot(pure_random, 'k.-', color='#000000', label='pure_random')
-plt.plot(nes, 'k.-', label='nes', color='#2277EE')
-plt.plot(gboy, 'k.-', label='gboy', color='#113311')
-plt.plot(tgm1, 'k.-', label='tgm1', color='#CC6666')
-plt.plot(tgm2, 'k.-', label='tgm2', color='#EE6666')
-plt.plot(tgm3, 'k.-', label='tgm3', color='#FF0000')
-plt.plot(ccs, 'k.-', label='ccs', color='#FF00FF')
-plt.plot(srs, 'k.-', label='srs', color='#00FFFF')
-plt.plot(toj, 'k.-', label='toj', color='#00FF88')
-plt.plot(bag2x, 'k.-', label='bag2x', color='#0000FF')
-plt.plot(tnt64, '.-', label='tnt64', color='#FFFF00')
-plt.title('Repeat intervals of various Tetris randomization algorithms')
+plt.figure(num=1, figsize=(10, 5), dpi=160, facecolor='w', edgecolor='k')
+
+plt.subplot(121)
+plt.plot(rnd_int, '.-', label='pure_random', color='#000000')
+plt.plot(nes_int, '.-', label='nes', color='#2277EE')
+plt.plot(gby_int, '.-', label='gboy', color='#113311')
+plt.plot(gm1_int, '.-', label='tgm1', color='#CC6666')
+plt.plot(gm2_int, '.-', label='tgm2', color='#EE6666')
+plt.plot(gm3_int, '.-', label='tgm3', color='#FF0000')
+plt.plot(ccs_int, '.-', label='ccs', color='#FF00FF')
+plt.plot(srs_int, '.-', label='srs', color='#00FFFF')
+plt.plot(toj_int, '.-', label='toj', color='#00FF88')
+plt.plot(b14_int, '.-', label='bag2x', color='#0000FF')
+plt.plot(b63_int, '.-', label='tnt64', color='#FFFF00')
+plt.title('probability of drought intervals')
 plt.xlabel('interval')
 plt.xlim(xmin=1, xmax=15)
 plt.ylabel('probability')
-plt.legend()
 
+plt.subplot(122)
+plt.plot(rnd_ent, '.-', label='pure_random', color='#000000')
+plt.plot(nes_ent, '.-', label='nes', color='#2277EE')
+plt.plot(gby_ent, '.-', label='gboy', color='#113311')
+plt.plot(gm1_ent, '.-', label='tgm1', color='#CC6666')
+plt.plot(gm2_ent, '.-', label='tgm2', color='#EE6666')
+plt.plot(gm3_ent, '.-', label='tgm3', color='#FF0000')
+plt.plot(ccs_ent, '.-', label='ccs', color='#FF00FF')
+plt.plot(srs_ent, '.-', label='srs', color='#00FFFF')
+plt.plot(toj_ent, '.-', label='toj', color='#00FF88')
+plt.plot(b14_ent, '.-', label='bag2x', color='#0000FF')
+plt.plot(b63_ent, '.-', label='tnt64', color='#FFFF00')
+plt.title('conditional entropy given history')
+plt.xlabel('history size')
+plt.xlim(xmin=0, xmax=14)
+plt.ylabel('entropy')
+plt.ylim(ymin=0, ymax=1)
+
+plt.tight_layout()
 plt.show()
