@@ -48,26 +48,33 @@ class nes:
 # GameBoy Tetris
 class gboy:
 
-    def __init__(self):
-    	self.h_size = 2
-        self.history = np.zeros([self.h_size], dtype=np.int64)
+    def __init__(self): 
+            self.h_size = 2 
+            self.history = np.zeros([self.h_size], dtype=np.int64) 
 
-    def rand(self):
+    def rand(self): 
 
-		# select next piece
-		for rolls in range(3):
-			piece = rng.randint(0,radix)
-			# real game bug -- bitwise or, used to incorrectly test "3-in-a-row"
-			if piece == (piece | self.history[0] | self.history[1]):
-				continue
-			else:
-				break
-		
-		# update history
-		self.history[1] = self.history[0]
-		self.history[0] = piece
+            # select next piece 
+            cycles = rng.randint(0,0x4000) # to-do: model this distribution... it's unlikely to be random
+            for rolls in range(3): 
+                    div = cycles // 0x40 # convert to 8 bit counter 
+                    piece = div % 7 
+                    # real game bug -- bitwise or, used to incorrectly test "3-in-a-row" 
+                    if piece == (piece | self.history[0] | self.history[1]): 
+                            # deterministic cycle advance for the "rerolls" 
+                            cycles += 100 # constant 
+                            cycles += (388 * (div // 7)) # full loop of 7 
+                            cycles += (56 * (div % 7)) # cycles for remainder 
+                            cycles &= 0x3FFF # 6 bit cycle counter (not 8 bits because every instruction is a multiple of 4 cycles) 
+                            continue 
+                    else: 
+                            break 
+            
+            # update history 
+            self.history[1] = self.history[0] 
+            self.history[0] = piece 
 
-		return piece
+            return piece 
 
 
 # Tetris the Grand Master
