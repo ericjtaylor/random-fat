@@ -32,11 +32,11 @@ class pure:
 # NES Tetris
 class nes:
 
-    def __init__(self):
-    	self.h_size = 1
-        self.history = np.zeros([self.h_size], dtype=np.int64)
+	def __init__(self):
+		self.h_size = 1
+		self.history = np.zeros([self.h_size], dtype=np.int64)
 
-    def rand(self):
+	def rand(self):
 
 		# select next piece
 		piece = rng.randint(0,radix+1)
@@ -52,68 +52,68 @@ class nes:
 # GameBoy Tetris
 class gboy:
 
-    def __init__(self): 
-            self.h_size = 2 
-            self.history = np.zeros([self.h_size], dtype=np.int64) 
+	def __init__(self): 
+			self.h_size = 2 
+			self.history = np.zeros([self.h_size], dtype=np.int64) 
 
-    def rand(self): 
+	def rand(self): 
 
-            # select next piece 
-            cycles = rng.randint(0,0x4000) # to-do: model this distribution... it's unlikely to be random
-            for rolls in range(3): 
-                    div = cycles // 0x40 # convert to 8 bit counter 
-                    piece = div % 7 
-                    # real game bug -- bitwise or, used to incorrectly test "3-in-a-row" 
-                    if piece == (piece | self.history[0] | self.history[1]): 
-                            # deterministic cycle advance for the "rerolls" 
-                            cycles += 100 # constant 
-                            cycles += (388 * (div // 7)) # full loop of 7 
-                            cycles += (56 * (div % 7)) # cycles for remainder 
-                            cycles &= 0x3FFF # 6 bit cycle counter (not 8 bits because every instruction is a multiple of 4 cycles) 
-                            continue 
-                    else: 
-                            break 
-            
-            # update history 
-            self.history[1] = self.history[0] 
-            self.history[0] = piece 
+			# select next piece 
+			cycles = rng.randint(0,0x4000) # to-do: model this distribution... it's unlikely to be random
+			for rolls in range(3): 
+					div = cycles // 0x40 # convert to 8 bit counter 
+					piece = div % 7 
+					# real game bug -- bitwise or, used to incorrectly test "3-in-a-row" 
+					if piece == (piece | self.history[0] | self.history[1]): 
+							# deterministic cycle advance for the "rerolls" 
+							cycles += 100 # constant 
+							cycles += (388 * (div // 7)) # full loop of 7 
+							cycles += (56 * (div % 7)) # cycles for remainder 
+							cycles &= 0x3FFF # 6 bit cycle counter (not 8 bits because every instruction is a multiple of 4 cycles) 
+							continue 
+					else: 
+							break 
+			
+			# update history 
+			self.history[1] = self.history[0] 
+			self.history[0] = piece 
 
-            return piece 
+			return piece 
 
 
 # GameBoy Tetris (hypothetical bugfixed)
 class gboy_fixed:
 
-    def __init__(self): 
-            self.h_size = 2 
-            self.history = np.zeros([self.h_size], dtype=np.int64) 
+	def __init__(self): 
+			self.h_size = 2 
+			self.history = np.zeros([self.h_size], dtype=np.int64) 
 
-    def rand(self): 
+	def rand(self): 
 
-            # select next piece 
-            for rolls in range(3): 
-                    piece = rng.randint(0,radix) 
-                    if ((piece == self.history[0]) and (self.history[0] == self.history[1])): 
-                            continue 
-                    else: 
-                            break 
-            
-            # update history 
-            self.history[1] = self.history[0] 
-            self.history[0] = piece 
+			# select next piece 
+			for rolls in range(3): 
+					piece = rng.randint(0,radix) 
+					if ((piece == self.history[0]) and (self.history[0] == self.history[1])): 
+							continue 
+					else: 
+							break 
+			
+			# update history 
+			self.history[1] = self.history[0] 
+			self.history[0] = piece 
 
-            return piece
+			return piece
 
 
 # Tetris the Grand Master
 class tgm1:
 
-    def __init__(self):
-    	self.h_size = 4
-        self.history = np.zeros([self.h_size], dtype=np.int64) # initial history ZZZZ
-        self.first_piece = 1
+	def __init__(self):
+		self.h_size = 4
+		self.history = np.zeros([self.h_size], dtype=np.int64) # initial history ZZZZ
+		self.first_piece = 1
 
-    def rand(self):
+	def rand(self):
 
 		# select next piece
 		for rolls in range(4):
@@ -142,12 +142,12 @@ class tgm1:
 # Tetris the Grand Master 2: The Absolute Plus
 class tgm2:
 
-    def __init__(self):
-    	self.h_size = 4
-        self.history = [1, 2, 1, 2] # initial history ZSZS
-        self.first_piece = 1
+	def __init__(self):
+		self.h_size = 4
+		self.history = [1, 2, 1, 2] # initial history ZSZS
+		self.first_piece = 1
 
-    def rand(self):
+	def rand(self):
 
 		# select next piece
 		for rolls in range(6):
@@ -176,22 +176,22 @@ class tgm2:
 # Tetris the Grand Master 3: Terror Instinct
 class tgm3:
 
-    def __init__(self):
-    	self.h_size = 4
-        self.history = [1, 2, 1, 2] # initial history ZSZS
-        self.first_piece = 1
-        self.drought = np.zeros([radix], dtype=np.int64)
-        self.droughtest = 0
-        self.pool = np.zeros([radix*5], dtype=np.int64)
-        for i in range(radix):
-        	self.pool[(i*5)+0] = i
-        	self.pool[(i*5)+1] = i
-        	self.pool[(i*5)+2] = i
-        	self.pool[(i*5)+3] = i
-        	self.pool[(i*5)+4] = i
-        	self.drought[i] = -999
+	def __init__(self):
+		self.h_size = 4
+		self.history = [1, 2, 1, 2] # initial history ZSZS
+		self.first_piece = 1
+		self.drought = np.zeros([radix], dtype=np.int64)
+		self.droughtest = 0
+		self.pool = np.zeros([radix*5], dtype=np.int64)
+		for i in range(radix):
+			self.pool[(i*5)+0] = i
+			self.pool[(i*5)+1] = i
+			self.pool[(i*5)+2] = i
+			self.pool[(i*5)+3] = i
+			self.pool[(i*5)+4] = i
+			self.drought[i] = -999
 
-    def rand(self):
+	def rand(self):
 		# select next piece
 		for rolls in range(6):
 
@@ -235,11 +235,11 @@ class tgm3:
 # Tetris with Cardcaptor Sakura: Eternal Heart
 class ccs:
 
-    def __init__(self):
-    	self.h_size = 6
-        self.history = [-1, -1, -1, -1, -1, -1]
+	def __init__(self):
+		self.h_size = 6
+		self.history = [-1, -1, -1, -1, -1, -1]
 
-    def rand(self):
+	def rand(self):
 
 		# select next piece
 		for rolls in range(4):
@@ -275,12 +275,12 @@ class ccs:
 # Super Rotation System / Tetris Guideline / "Random Generator" aka 7-bag
 class srs:
 
-    def __init__(self):
-    	self.pool = np.arange(0, radix, 1, dtype=np.int64)
-    	rng.shuffle(self.pool)
-        self.index = 0
+	def __init__(self):
+		self.pool = np.arange(0, radix, 1, dtype=np.int64)
+		rng.shuffle(self.pool)
+		self.index = 0
 
-    def rand(self):
+	def rand(self):
 
 		# select next piece
 		piece = self.pool[self.index]
@@ -294,13 +294,13 @@ class srs:
 # Tetris Online Japan (beta)
 class toj:
 
-    def __init__(self):
-    	self.pool = np.arange(0, radix+1, 1, dtype=np.int64)
-    	self.pool[radix] = rng.randint(0,radix)
-    	rng.shuffle(self.pool)
-        self.index = 0
+	def __init__(self):
+		self.pool = np.arange(0, radix+1, 1, dtype=np.int64)
+		self.pool[radix] = rng.randint(0,radix)
+		rng.shuffle(self.pool)
+		self.index = 0
 
-    def rand(self):
+	def rand(self):
 
 		# select next piece
 		piece = self.pool[self.index]
@@ -314,14 +314,14 @@ class toj:
 # Double Bag aka 14-bag
 class bag2x:
 
-    def __init__(self):
-    	self.pool = np.arange(0, radix*2, 1, dtype=np.int64)
-    	for i in range(radix, radix*2):
-    		self.pool[i] = self.pool[i] % radix
-    	rng.shuffle(self.pool)
-        self.index = 0
+	def __init__(self):
+		self.pool = np.arange(0, radix*2, 1, dtype=np.int64)
+		for i in range(radix, radix*2):
+			self.pool[i] = self.pool[i] % radix
+		rng.shuffle(self.pool)
+		self.index = 0
 
-    def rand(self):
+	def rand(self):
 
 		# select next piece
 		piece = self.pool[self.index]
@@ -335,14 +335,14 @@ class bag2x:
 # The New Tetris
 class tnt64:
 
-    def __init__(self):
-    	self.pool = np.arange(0, radix*9, 1, dtype=np.int64)
-    	for i in range(radix, radix*9):
-    		self.pool[i] = self.pool[i] % radix
-    	rng.shuffle(self.pool)
-        self.index = 0
+	def __init__(self):
+		self.pool = np.arange(0, radix*9, 1, dtype=np.int64)
+		for i in range(radix, radix*9):
+			self.pool[i] = self.pool[i] % radix
+		rng.shuffle(self.pool)
+		self.index = 0
 
-    def rand(self):
+	def rand(self):
 
 		# select next piece
 		piece = self.pool[self.index]
@@ -403,9 +403,9 @@ def stats_calc(randomizer):
 	intervals = intervals / iterations # converts to % all intervals
 	entropy = entropy / np.log(radix) # converts to % of pure random
 
-	print randomizer.im_class
-	print "interval: ", intervals[:20]
-	print "entropy: ", entropy
+	print(randomizer.im_class)
+	print("interval: ", intervals[:20])
+	print("entropy: ", entropy)
 	return (intervals, entropy)
 
 # calculate the intervals for the various randomizers
